@@ -72,6 +72,7 @@ train_features, test_features, train_labels, test_labels = train_test_split(feat
 ```
 
 <h3>4. Normalisation des données de caractéristiques</h3>
+
 <p>Étant donné que nous n'avons pas trouvé de corrélations fortes particulières entre nos caractéristiques, nous pouvons plutôt utiliser une approche commune pour réduire le nombre de caractéristiques appelée analyse en composantes principales (PCA)
 Pour éviter les biais, je normalise d'abord les données à l'aide de la méthode  <code>sklearn</code> built-in <code>StandardScaler</code> method</p>
 
@@ -229,7 +230,7 @@ train_features, test_features, train_labels, test_labels = train_test_split(
 
 train_pca = pca.fit_transform(scaler.fit_transform(train_features))
 test_pca = pca.transform(scaler.transform(test_features))
-```python
+```
 
 <h3>11. L'équilibrage de notre ensemble de données améliore-t-il le biais du modèle ?</h3>
 
@@ -248,7 +249,7 @@ pred_labels_logit = logreg.predict(test_pca)
 print("Decision Tree: \n", classification_report(test_labels, pred_labels_tree))
 print("Logistic Regression: \n", classification_report(test_labels, pred_labels_logit))
 
-```python
+```
 <h3>12. Utiliser la validation croisée pour évaluer nos modèles</h3>
 <p>Pour avoir une bonne idée de la performance réelle de nos modèles, nous pouvons appliquer ce qu'on appelle <b>cross-validation</b> (CV).
 
