@@ -6,8 +6,10 @@
   <img width=500 height=300 src='https://i.ytimg.com/vi/oPgWYj2smCw/maxresdefault.jpg'>
 </p> -->
 
-<h3>1. Preparing our dataset</h3>
-<p>    Over the past few years, streaming services with huge catalogs have become the primary means through which most people listen to their favorite music. For this reason, streaming services have looked into means of categorizing music to allow for personalized recommendations.<br><br>Let's load the metadata about our tracks alongside the track metrics compiled by <b>The Echo Nest</b>.</p>
+<h3>1. Préparer notre dataset</h3>
+<p>   Au cours des dernières années, les services de streaming avec d'énormes catalogues sont devenus le principal moyen par lequel la plupart des gens écoutent leur musique préférée. Pour cette raison, les services de streaming ont cherché des moyens de catégoriser la musique pour permettre des recommandations personnalisées.
+
+Chargeons les métadonnées sur nos pistes aux côtés des métriques de piste compilées par<b>The Echo Nest</b>.</p>
 
 ```python
 import pandas as pd
@@ -38,8 +40,9 @@ echo_tracks.info()
 |         memory usage: 412.7+ KB         |                       |
 
 
-<h3>2. Pairwise relationships between continuous variables</h3>
-<p>We want to avoid using variables that have strong correlations with each other -- hence avoiding feature redundancy<br>To get a sense of whether there are any strongly correlated features in our data, we will use built-in functions in the <code>pandas</code> package <code>.corr()</code>. </p>
+<h3>2. Relations par paires entre variables continues</h3>
+<p>Nous voulons éviter d'utiliser des variables qui ont de fortes corrélations entre elles - évitant ainsi la redondance des fonctionnalités
+Pour savoir s'il existe des fonctionnalités fortement corrélées dans nos données, nous utiliserons des fonctions intégrées dans le<code>pandas</code> package <code>.corr()</code>. </p>
 
 ```python
 corr_metrics = echo_tracks.corr()
@@ -49,8 +52,9 @@ corr_metrics.style.background_gradient()
   <img src='datasets/corr.jpg'>
 </p>
 
-<h3>3. Normalizing the feature data</h3>
-<p>Since we didn't find any particular strong correlations between our features, we can instead use a common approach to reduce the number of features called <b>principal component analysis (PCA)</b><br>To avoid bias, I first normalize the data using <code>sklearn</code> built-in <code>StandardScaler</code> method</p>
+<h3>3. Normalisation des données de caractéristiques</h3>
+<pÉtant donné que nous n'avons pas trouvé de corrélations fortes particulières entre nos caractéristiques, nous pouvons plutôt utiliser une approche commune pour réduire le nombre de caractéristiques appelée analyse en composantes principales (PCA)
+Pour éviter les biais, je normalise d'abord les données à l'aide de la méthode  <code>sklearn</code> built-in <code>StandardScaler</code> method</p>
 
 ```python
 from sklearn.preprocessing import StandardScaler
@@ -62,8 +66,9 @@ scaler = StandardScaler()
 scaled_train_features = scaler.fit_transform(features)
 ```
 
-<h3>4. Principal Component Analysis on our scaled data</h3>
-<p>Now PCA is ready to determine by how much we can reduce the dimensionality of our data. We can use <b>scree-plots</b> and <b>cumulative explained ratio plots</b> to find the number of components to use in further analyses.<br>When using scree plots, an 'elbow' (a steep drop from one data point to the next) in the plot is typically used to decide on an appropriate cutoff.</p>
+<h3>4. Analyse en composantes principales sur nos données à l'échelle</h3>
+<p>PCA est maintenant prêt à déterminer de combien nous pouvons réduire la dimensionnalité de nos données. Nous pouvons utiliser des diagrammes d'éboulis et des diagrammes de rapport expliqué cumulatif pour trouver le nombre de composants à utiliser dans des analyses ultérieures.
+Lors de l'utilisation de diagrammes d'éboulis, un «coude» (une forte baisse d'un point de données à l'autre) dans le diagramme est généralement utilisé pour décider d'un seuil approprié.</p>
   
 ```python
 from sklearn.decomposition import PCA
@@ -79,10 +84,10 @@ ax.bar(range(pca.n_components_), exp_variance)
 
 <img src='datasets/PCAhist.jpg'>
 
-<p>Unfortunately, there does not appear to be a clear elbow in this scree plot, which means it is not straightforward to find the number of intrinsic dimensions using this method.</p>
+<p>Malheureusement, il ne semble pas y avoir de coude clair dans ce diagramme d'éboulis, ce qui signifie qu'il n'est pas simple de trouver le nombre de dimensions intrinsèques à l'aide de cette méthode.</p>
 
-<h3>5. Further visualization of PCA</h3>
-<p>Let's nownlook at the <b>cumulative explained variance plot</b> to determine how many features are required to explain, say, about 85% of the variance</p>
+<h3>5. Visualisation plus poussée de l'ACP</h3>
+<p>Examinons maintenant le diagramme de la variance expliquée cumulée pour déterminer combien de caractéristiques sont nécessaires pour expliquer, disons, environ 85 % de la variance</p>
 
 ```python
 cum_exp_variance = np.cumsum(exp_variance)
@@ -102,8 +107,8 @@ pca_projection = pca.transform(scaled_train_features)
 
 
 
-<h3>6. Train a decision tree to classify genre</h3>
-<p>Now we can use the lower dimensional PCA projection of the data to classify songs into genres. we will be using a simple algorithm known as a <b>decision tree</b>.</p>
+<h3>6. Former decision tree pour classer le genre </h3>
+<p>Nous pouvons maintenant utiliser la projection PCA de dimension inférieure des données pour classer les chansons en genres. nous utiliserons un algorithme simple connu sous le nom de <b>decision tree</b>.</p>
 
 ```python
 from sklearn.model_selection import train_test_split
@@ -117,8 +122,8 @@ tree.fit(train_features, train_labels)
 pred_labels_tree = tree.predict(test_features)
 ```
 
-<h3>7. Compare our decision tree to a logistic regression</h3>
-<p>There's always the possibility of other models that will perform even better! Sometimes simplest is best, and so we will start by applying <b>logistic regression</b>.</p>
+<h3>7. Comparez notre arbre de décision à  logistic regression</h3>
+<p>Il y a toujours la possibilité d'autres modèles qui fonctionneront encore mieux ! Parfois, le plus simple est le meilleur, et nous commencerons donc par appliquer <b>logistic regression</b>.</p>
 
 ```python
 from sklearn.linear_model import LogisticRegression
@@ -150,8 +155,8 @@ print("Logistic Regression: \n", class_rep_log)
 | avg / total          | 0.87   | 0.88     | 0.87    | 1201 | 
 
 
-<h3>8. Using cross-validation to evaluate our models</h3>
-<p>To get a good sense of how well our models are actually performing, we can apply what's called <b>cross-validation</b> (CV).
+<h3>8. Utiliser la validation croisée pour évaluer nos modèles</h3>
+<p>Pour avoir une bonne idée de la performance réelle de nos modèles, nous pouvons appliquer ce qu'on appelle <b>cross-validation</b> (CV).
 
 ```python
 from sklearn.model_selection import KFold, cross_val_score
@@ -170,4 +175,4 @@ print("Logistic Regression:", logit_score)
 >>> Logistic Regression: [0.79120879 0.76373626 0.78571429 0.78571429 0.78571429 0.78021978 0.75274725 0.76923077 0.81868132 0.71978022]
 ```
 
-<h4> Success! </h4>
+
