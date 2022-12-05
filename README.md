@@ -14,14 +14,15 @@ Chargeons les métadonnées sur nos pistes aux côtés des métriques de piste c
 ```python
 import pandas as pd
 
-tracks = pd.read_csv('datasets/fma-rock-vs-hiphop.csv')
-echonest_metrics = pd.read_json('datasets/echonest-metrics.json', precise_float=True)
-
+# Read in track metadata with genre labels
+tracks = pd.read_csv('./datasets/fma-rock-vs-hiphop.csv')
+# Read in track metrics with the features
+echonest_metrics = pd.read_json('./datasets/echonest-metrics.json', precise_float=True)
 # Merge the relevant columns of tracks and echonest_metrics
-echo_tracks = pd.merge(echonest_metrics, tracks[['track_id' , 'genre_top']], how='inner', on='track_id')
-
+echo_tracks = pd.merge(echonest_metrics, tracks[['track_id', 'genre_top']], on='track_id')
 # Inspect the resultant dataframe
-echo_tracks.info()
+print(echo_tracks.info())
+
 ```
 |   Int64Index: 4802 entries, 0 to 4801   |                       |
 |:---------------------------------------:|:---------------------:|
