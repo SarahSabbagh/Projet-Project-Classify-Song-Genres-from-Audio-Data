@@ -50,15 +50,15 @@ Pour savoir s'il existe des fonctionnalités fortement corrélées dans nos donn
 # Create a correlation matrix
 corr_metrics = echo_tracks.corr()
 corr_metrics.style.background_gradient()
-
 ```
 <p align='center'>
   <img src='datasets/corr.png'>
 </p>
 
 <h3>3. Diviser nos données</h3>
+
 ```python
-# Import train_test_split function and Decision tree classifier
+
 from sklearn.model_selection import train_test_split
 
 # Create features
