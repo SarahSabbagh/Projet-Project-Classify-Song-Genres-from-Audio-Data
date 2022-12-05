@@ -46,56 +46,91 @@ print(echo_tracks.info())
 Pour savoir s'il existe des fonctionnalités fortement corrélées dans nos données, nous utiliserons des fonctions intégrées dans le<code>pandas</code> package <code>.corr()</code>. </p>
 
 ```python
+
+# Create a correlation matrix
 corr_metrics = echo_tracks.corr()
 corr_metrics.style.background_gradient()
+
 ```
 <p align='center'>
   <img src='datasets/corr.png'>
 </p>
 
-<h3>3. Normalisation des données de caractéristiques</h3>
-<pÉtant donné que nous n'avons pas trouvé de corrélations fortes particulières entre nos caractéristiques, nous pouvons plutôt utiliser une approche commune pour réduire le nombre de caractéristiques appelée analyse en composantes principales (PCA)
+<h3>3. Diviser nos données</h3>
+```python
+# Import train_test_split function and Decision tree classifier
+from sklearn.model_selection import train_test_split
+
+# Create features
+features = echo_tracks.drop(["genre_top", "track_id"], axis=1).values
+
+# Create labels
+labels = echo_tracks["genre_top"].values
+
+# Split our data
+train_features, test_features, train_labels, test_labels = train_test_split(features, labels, random_state=10)
+```
+
+<h3>4. Normalisation des données de caractéristiques</h3>
+<p>Étant donné que nous n'avons pas trouvé de corrélations fortes particulières entre nos caractéristiques, nous pouvons plutôt utiliser une approche commune pour réduire le nombre de caractéristiques appelée analyse en composantes principales (PCA)
 Pour éviter les biais, je normalise d'abord les données à l'aide de la méthode  <code>sklearn</code> built-in <code>StandardScaler</code> method</p>
 
 ```python
+# Import the StandardScaler
 from sklearn.preprocessing import StandardScaler
 
-features = echo_tracks.drop(['track_id', 'genre_top'], axis=1)
-labels = echo_tracks.genre_top
-
+# Scale train_features and set the values to a new variable
 scaler = StandardScaler()
-scaled_train_features = scaler.fit_transform(features)
+
+# Scale train_features and test_features
+scaled_train_features = scaler.fit_transform(train_features)
+scaled_test_features = scaler.transform(test_features)
+
 ```
 
-<h3>4. Analyse en composantes principales sur nos données à l'échelle</h3>
+<h3>5. Analyse en composantes principales sur nos données à l'échelle</h3>
+
 <p>PCA est maintenant prêt à déterminer de combien nous pouvons réduire la dimensionnalité de nos données. Nous pouvons utiliser des diagrammes d'éboulis et des diagrammes de rapport expliqué cumulatif pour trouver le nombre de composants à utiliser dans des analyses ultérieures.
 Lors de l'utilisation de diagrammes d'éboulis, un «coude» (une forte baisse d'un point de données à l'autre) dans le diagramme est généralement utilisé pour décider d'un seuil approprié.</p>
   
 ```python
-from sklearn.decomposition import PCA
+# This is just to make plots appear in the notebook
+%matplotlib inline
 
+# Import our plotting module, and PCA class
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+# Get our explained variance ratios from PCA using all features
 pca = PCA()
 pca.fit(scaled_train_features)
-
 exp_variance = pca.explained_variance_ratio_
 
+# plot the explained variance using a barplot
 fig, ax = plt.subplots()
 ax.bar(range(pca.n_components_), exp_variance)
+ax.set_xlabel('Principal Component #')
+
 ```
 
 <img src='datasets/PCAhist.png'>
 
 <p>Malheureusement, il ne semble pas y avoir de coude clair dans ce diagramme d'éboulis, ce qui signifie qu'il n'est pas simple de trouver le nombre de dimensions intrinsèques à l'aide de cette méthode.</p>
 
-<h3>5. Visualisation plus poussée de l'ACP</h3>
+<h3>6. Visualisation plus poussée de l'ACP</h3>
 <p>Examinons maintenant le diagramme de la variance expliquée cumulée pour déterminer combien de caractéristiques sont nécessaires pour expliquer, disons, environ 85 % de la variance</p>
 
 ```python
+# Import numpy
+import numpy as np
+
+# Calculate the cumulative explained variance
 cum_exp_variance = np.cumsum(exp_variance)
 
+# Plot the cumulative explained variance and draw a dashed line at 0.85.
 fig, ax = plt.subplots()
 ax.plot(cum_exp_variance)
-ax.axhline(y=0.85, linestyle='--')
+ax.axhline(y=0.9, linestyle='--')
+n_components = 6
 
 # choose the n_components where about 85% of our variance can be explained
 n_components = 6
@@ -106,34 +141,50 @@ pca_projection = pca.transform(scaled_train_features)
 ```
 <img src='datasets/linePCA.png'>
 
+<h3>7. Projection sur nos fonctionnalités </h3>
 
+```python
+# Perform PCA with the chosen number of components and project data onto components
+pca = PCA(n_components=6, random_state=10)
 
-<h3>6. Former decision tree pour classer le genre </h3>
+# Fit and transform the scaled training features using pca
+train_pca = pca.fit_transform(scaled_train_features)
+
+# Fit and transform the scaled test features using pca
+test_pca = pca.transform(scaled_test_features)
+```
+
+<h3>8. Former decision tree pour classer le genre </h3>
 <p>Nous pouvons maintenant utiliser la projection PCA de dimension inférieure des données pour classer les chansons en genres. nous utiliserons un algorithme simple connu sous le nom de <b>decision tree</b>.</p>
 
 ```python
-from sklearn.model_selection import train_test_split
+# Import Decision tree classifier
 from sklearn.tree import DecisionTreeClassifier
 
-train_features, test_features, train_labels, test_labels = train_test_split(pca_projection, labels, random_state=10)
-
+# Create our decision tree
 tree = DecisionTreeClassifier(random_state=10)
-tree.fit(train_features, train_labels)
 
-pred_labels_tree = tree.predict(test_features)
+# Train our decision tree
+tree.fit(train_pca, train_labels)
+
+# Predict the labels for the test data
+pred_labels_tree = tree.predict(test_pca)
 ```
 
-<h3>7. Comparez notre arbre de décision à  logistic regression</h3>
+<h3>9. Comparez notre arbre de décision à  logistic regression</h3>
 <p>Il y a toujours la possibilité d'autres modèles qui fonctionneront encore mieux ! Parfois, le plus simple est le meilleur, et nous commencerons donc par appliquer <b>logistic regression</b>.</p>
 
 ```python
+# Import LogisticRegression
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
 
+# Train our logisitic regression
 logreg = LogisticRegression(random_state=10)
-logreg.fit(train_features, train_labels)
-pred_labels_logit = logreg.predict(test_features)
+logreg.fit(train_pca, train_labels)
+pred_labels_logit = logreg.predict(test_pca)
 
+# Create the classification report for both models
+from sklearn.metrics import classification_report
 class_rep_tree = classification_report(test_labels, pred_labels_tree)
 class_rep_log = classification_report(test_labels, pred_labels_logit)
 
@@ -155,25 +206,71 @@ print("Logistic Regression: \n", class_rep_log)
 | Rock                 | 0.90   | 0.95     | 0.93    | 972  |
 | avg / total          | 0.87   | 0.88     | 0.87    | 1201 | 
 
+<h3>10. Équilibrer nos données pour plus de performance</h3>
 
-<h3>8. Utiliser la validation croisée pour évaluer nos modèles</h3>
+```python
+# Subset a balanced proportion of data points
+hop_only = echo_tracks.loc[echo_tracks['genre_top'] == 'Hip-Hop']
+rock_only = echo_tracks.loc[echo_tracks['genre_top'] == 'Rock']
+
+# subset only the rock songs, and take a sample the same size as there are hip-hop songs
+rock_only = rock_only.sample(hop_only.shape[0], random_state=10)
+
+# concatenate the dataframes hop_only and rock_only
+rock_hop_bal = pd.concat([rock_only, hop_only])
+
+# The features, labels, and pca projection are created for the balanced dataframe
+features = rock_hop_bal.drop(['genre_top', 'track_id'], axis=1) 
+labels = rock_hop_bal['genre_top']
+
+# Redefine the train and test set with the pca_projection from the balanced data
+train_features, test_features, train_labels, test_labels = train_test_split(
+    features, labels, random_state=10)
+
+train_pca = pca.fit_transform(scaler.fit_transform(train_features))
+test_pca = pca.transform(scaler.transform(test_features))
+```python
+
+<h3>11. L'équilibrage de notre ensemble de données améliore-t-il le biais du modèle ?</h3>
+
+```python
+# Train our decision tree on the balanced data
+tree = DecisionTreeClassifier(random_state=10)
+tree.fit(train_pca, train_labels)
+pred_labels_tree = tree.predict(test_pca)
+
+# Train our logistic regression on the balanced data
+logreg = LogisticRegression(random_state=10)
+logreg.fit(train_pca, train_labels)
+pred_labels_logit = logreg.predict(test_pca)
+
+# compare the models
+print("Decision Tree: \n", classification_report(test_labels, pred_labels_tree))
+print("Logistic Regression: \n", classification_report(test_labels, pred_labels_logit))
+
+```python
+<h3>12. Utiliser la validation croisée pour évaluer nos modèles</h3>
 <p>Pour avoir une bonne idée de la performance réelle de nos modèles, nous pouvons appliquer ce qu'on appelle <b>cross-validation</b> (CV).
 
 ```python
 from sklearn.model_selection import KFold, cross_val_score
+from sklearn.pipeline import Pipeline
+tree_pipe = Pipeline([("scaler", StandardScaler()), ("pca", PCA(n_components=6)), 
+                      ("tree", DecisionTreeClassifier(random_state=10))])
+logreg_pipe = Pipeline([("scaler", StandardScaler()), ("pca", PCA(n_components=6)), 
+                        ("logreg", LogisticRegression(random_state=10))])
 
-kf = KFold(n_splits=10)
+# Set up our K-fold cross-validation
+kf = KFold(10)
 
-tree = DecisionTreeClassifier(random_state=10)
-logreg = LogisticRegression(random_state=10)
+# Train our models using KFold cv
+tree_score = cross_val_score(tree_pipe, features, labels, cv=kf)
+logit_score = cross_val_score(logreg_pipe, features, labels, cv=kf)
 
-tree_score = cross_val_score(tree,pca_projection, labels, cv=kf)
-logit_score = cross_val_score(logreg,pca_projection, labels, cv=kf)
+# Print the mean of each array o scores
+print("Decision Tree:", np.mean(tree_score), "Logistic Regression:", np.mean(logit_score))
+>>> Decision Tree: 0.7219780219780221 Logistic Regression: 0.773076923076923
 
-print("Decision Tree:", tree_score)
->>> Decision Tree: [0.6978022  0.6978022  0.69230769 0.78571429 0.71978022 0.67032967 0.75824176 0.76923077 0.75274725 0.6978022 ]
-print("Logistic Regression:", logit_score)
->>> Logistic Regression: [0.79120879 0.76373626 0.78571429 0.78571429 0.78571429 0.78021978 0.75274725 0.76923077 0.81868132 0.71978022]
 ```
 
 
