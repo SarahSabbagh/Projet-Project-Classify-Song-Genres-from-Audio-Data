@@ -49,7 +49,7 @@ corr_metrics = echo_tracks.corr()
 corr_metrics.style.background_gradient()
 ```
 <p align='center'>
-  <img src='datasets/corr.jpg'>
+  <img src='datasets/corr.png'>
 </p>
 
 <h3>3. Normalisation des données de caractéristiques</h3>
@@ -82,7 +82,7 @@ fig, ax = plt.subplots()
 ax.bar(range(pca.n_components_), exp_variance)
 ```
 
-<img src='datasets/PCAhist.jpg'>
+<img src='datasets/PCAhist.png'>
 
 <p>Malheureusement, il ne semble pas y avoir de coude clair dans ce diagramme d'éboulis, ce qui signifie qu'il n'est pas simple de trouver le nombre de dimensions intrinsèques à l'aide de cette méthode.</p>
 
@@ -103,7 +103,7 @@ pca = PCA(n_components, random_state=10)
 pca.fit(scaled_train_features)
 pca_projection = pca.transform(scaled_train_features)
 ```
-<img src='datasets/linePCA.jpg'>
+<img src='datasets/linePCA.png'>
 
 
 
